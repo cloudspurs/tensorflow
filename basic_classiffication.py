@@ -1,3 +1,5 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # TensorFlow and tf.keras
 import tensorflow as tf
 from tensorflow import keras
@@ -22,7 +24,8 @@ print(len(train_labels))
 #plt.grid(False)
 #plt.show()
 
-#????????????????????????????????????????????????????????????????????
+
+# normalization
 train_images = train_images / 255.0
 test_images = test_images / 255.0
 
@@ -36,28 +39,49 @@ test_images = test_images / 255.0
 #    plt.xlabel(class_names[train_labels[i]])
 #plt.show()
 
-# configuring the layers of the model
-model = keras.Sequential([
-    keras.layers.Flatten(input_shape=(28, 28)),
-    keras.layers.Dense(128, activation=tf.nn.relu),
-    keras.layers.Dense(10, activation=tf.nn.softmax)
-])
 
-# compiling the model
-model.compile(optimizer=tf.train.AdamOptimizer(), 
-              loss='sparse_categorical_crossentropy',
-              metrics=['accuracy'])
+epoch = list( i * 5 for i in range(1, 41))
+one_acc = []
+average_acc = []
 
-model.fit(train_images, train_labels, epochs=15)
+for i in epoch:
+	ten_acc = []
+	for j in range(10):
+		print('Number of times: ' + str(j))
+		# configuring the layers of the model
+		model = keras.Sequential([
+		    keras.layers.Flatten(input_shape=(28, 28)),
+		    keras.layers.Dense(128, activation=tf.nn.relu),
+		    keras.layers.Dense(10, activation=tf.nn.softmax)
+		])
+		
+		# compiling the model
+		model.compile(optimizer=tf.train.AdamOptimizer(),  # Adaptive Moment Estimation
+		              loss='sparse_categorical_crossentropy', # 稀疏多类对数损失
+		              metrics=['accuracy'])
 
-test_loss, test_acc = model.evaluate(test_images, test_labels)
+		model.fit(train_images, train_labels, epochs=i, verbose=2)
+		test_loss, test_acc = model.evaluate(test_images, test_labels)
+		print('Accuracy: ' + str(test_acc))
+		ten_acc.append(test_acc)
+	average_acc.append(np.mean(ten_acc))
+	one_acc.append(ten_acc[0])
+	
+plt.figure()
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.plot(epoch, one_acc, label='Once')
+plt.plot(epoch, average_acc, label='Average 10')
+plt.legend()
+plt.savefig('acc.png')
+#plt.show()
 
-print('\nTest accuracy:', test_acc)
-
-predictions = model.predict(test_images)
-print(predictions[0])
-print(np.argmax(predictions[0]))
-print(test_labels[0])
+#print('\nTest accuracy:', test_acc)
+#
+#predictions = model.predict(test_images)
+#print(predictions[0])
+#print(np.argmax(predictions[0]))
+#print(test_labels[0])
 
 
 def plot_image(i, predictions_array, true_label, img):
